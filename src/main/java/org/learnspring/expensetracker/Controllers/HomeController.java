@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.learnspring.expensetracker.Model.Expense;
 import org.learnspring.expensetracker.Service.expenseService;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.security.web.csrf.CsrfToken;
 import jakarta.validation.Valid;
 
 @Controller
@@ -47,7 +48,11 @@ public class HomeController {
         logger.info("Successfully added expense with ID: {}", exp.getId());
         return exp;
     }
+    @GetMapping("/CsrfToken")
+   public CsrfToken getCsrfToken(HttpServletRequest request){
+        return (CsrfToken) request.getAttribute("_csrf");
 
+   }
     @PutMapping("/updateExpense")
     public Expense updateExpenses(@Valid @RequestBody Expense exp){
         logger.info("Updating expense with ID: {}", exp.getId());
