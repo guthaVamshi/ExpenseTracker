@@ -1,10 +1,14 @@
 package org.learnspring.expensetracker.Model;
 
 
+import java.time.LocalDate;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -34,4 +38,17 @@ public class Expense {
     @NotBlank(message = "Expense amount is required")
     @Size(max = 20, message = "Expense amount must be at most 20 characters")
     private String expenseAmount;
+
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
+    @Column(name = "date")
+    private LocalDate date;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.date == null) {
+            this.date = LocalDate.now();
+        }
+    }
 }

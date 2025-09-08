@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: expense-tracker-api
+    env: java
+    plan: free
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/ExpenseTracker-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: CORS_ORIGINS
+        value: https://your-frontend-domain.onrender.com
+    healthCheckPath: /api-docs
+
+  - type: web
+    name: expense-tracker-frontend
+    env: static
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://expense-tracker-api.onrender.com/api

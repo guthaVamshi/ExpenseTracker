@@ -4,12 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.learnspring.expensetracker.Model.Expense;
 import org.learnspring.expensetracker.Service.expenseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +18,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.web.csrf.CsrfToken;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @Controller
@@ -39,6 +40,12 @@ public class HomeController {
     public List<Expense> getAllExpenses(){
         logger.info("Fetching all expenses");
         return service.getExpenses();
+    }
+
+    @GetMapping("/by-month/{yearMonth}")
+    public List<Expense> getByMonth(@PathVariable String yearMonth){
+        logger.info("Fetching expenses for month {}", yearMonth);
+        return service.getByMonth(yearMonth);
     }
 
     @PostMapping("/add")
@@ -100,6 +107,15 @@ public class HomeController {
         getAll.put("description", "Get all expenses");
         getAll.put("response", "List<Expense>");
         endpoints.put("getAllExpenses", getAll);
+
+        // GET /by-month/{yearMonth}
+        Map<String, Object> byMonth = new HashMap<>();
+        byMonth.put("method", "GET");
+        byMonth.put("path", "/by-month/{yearMonth}");
+        byMonth.put("description", "Get expenses for a given month (YYYY-MM)");
+        byMonth.put("pathVariable", "yearMonth (String)");
+        byMonth.put("response", "List<Expense>");
+        endpoints.put("getByMonth", byMonth);
         
         // POST /add
         Map<String, Object> add = new HashMap<>();

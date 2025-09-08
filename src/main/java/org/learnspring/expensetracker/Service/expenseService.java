@@ -1,5 +1,7 @@
 package org.learnspring.expensetracker.Service;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import org.learnspring.expensetracker.Model.Expense;
@@ -41,5 +43,13 @@ public class expenseService {
         logger.debug("Deleting expense from database: {}", exp);
         expenseRepo.delete(exp);
         logger.debug("Successfully deleted expense with ID: {}", exp.getId());
+    }
+
+    public List<Expense> getByMonth(String yearMonth) {
+        YearMonth ym = YearMonth.parse(yearMonth); // expects YYYY-MM
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+        logger.debug("Fetching expenses between {} and {}", start, end);
+        return expenseRepo.findByDateBetween(start, end);
     }
 }
