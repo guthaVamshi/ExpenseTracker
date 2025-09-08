@@ -12,13 +12,3 @@ services:
         value: https://your-frontend-domain.onrender.com
     healthCheckPath: /api-docs
     region: oregon
-
-  - type: web
-    name: expense-tracker-frontend
-    env: static
-    plan: free
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://expense-tracker-api.onrender.com/api
