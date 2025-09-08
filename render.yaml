@@ -11,6 +11,7 @@ services:
       - key: CORS_ORIGINS
         value: https://your-frontend-domain.onrender.com
     healthCheckPath: /api-docs
+    dockerfilePath: ""
 
   - type: web
     name: expense-tracker-frontend
