@@ -1,8 +1,0 @@
-target/
-!target/*.jar
-*.md
-.git
-.gitignore
-frontend/
-logs/
-*.log
