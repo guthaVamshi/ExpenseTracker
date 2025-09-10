@@ -103,11 +103,15 @@ export default function DashboardPage() {
       const amount = Number(it.expenseAmount ?? 0) || 0
       const type = (it.expenseType ?? '').toLowerCase()
       const isIncome = type === 'income' || type === 'salary' || type === 'credit'
+      const isConversion = type === 'conversion'
       return {
         name,
         Amount: amount,
-        Expense: isIncome ? 0 : amount,
+        // Regular expenses (excluding conversions and income)
+        Expense: !isIncome && !isConversion ? amount : 0,
         Income: isIncome ? amount : 0,
+        // Conversions are outgoing money but tracked separately
+        Conversion: isConversion ? amount : 0,
       }
     })
   }, [filtered])
@@ -120,22 +124,28 @@ export default function DashboardPage() {
         const paymentMethod = (it.paymentMethod ?? '').toLowerCase()
         const isIncome = type === 'income' || type === 'salary' || type === 'credit'
         const isCreditCardPayment = type === 'credit card payment' || paymentMethod === 'credit card payment'
+        const isConversion = type === 'conversion'
         
+        // Total tracks all money movement
         acc.total += amount
         if (isIncome) {
           acc.income += amount
         } else if (isCreditCardPayment) {
           acc.creditCardPayments += amount
+        } else if (isConversion) {
+          acc.conversions += amount
+          // Conversions are also part of total outgoing, but tracked separately
         } else {
           acc.expense += amount
         }
         return acc
       },
-      { total: 0, income: 0, expense: 0, creditCardPayments: 0 }
+      { total: 0, income: 0, expense: 0, creditCardPayments: 0, conversions: 0 }
     )
   }, [filtered])
 
-  const net = totals.income - totals.expense
+  // Net calculation: Income minus all outgoing money (expenses + conversions)
+  const net = totals.income - (totals.expense + totals.conversions)
   const creditCardBalance = totals.expense - totals.creditCardPayments
 
   // Dynamic background based on profit/loss
@@ -194,7 +204,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <main className="relative z-10 max-w-8xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         {/* Search and Controls Section */}
         <div className="glass-card rounded-3xl p-6 shadow-apple-lg animate-fade-in">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -288,6 +298,7 @@ export default function DashboardPage() {
                 <option>Expense</option>
                 <option>Income</option>
                 <option>Credit Card Payment</option>
+                <option>Conversion</option>
               </select>
             </div>
                 
@@ -364,7 +375,22 @@ export default function DashboardPage() {
                 <h2 className="text-xl font-bold text-gray-800">Financial Overview</h2>
               </div>
               
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* Conversions Card - Featured at the beginning */}
+                <div className="glass-dark rounded-2xl p-4 hover:scale-105 transition-transform duration-200 border-2 border-purple-200/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 font-medium">Conversions</div>
+                      <div className="text-lg font-bold text-purple-600">${totals.conversions.toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="glass-dark rounded-2xl p-4 hover:scale-105 transition-transform duration-200">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
@@ -457,6 +483,10 @@ export default function DashboardPage() {
                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
                   </linearGradient>
+                  <linearGradient id="colorConversion" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                  </linearGradient>
                 </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
                 <XAxis dataKey="name" hide />
@@ -473,6 +503,7 @@ export default function DashboardPage() {
                 <Legend />
                     <Area type="monotone" dataKey="Expense" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
                     <Area type="monotone" dataKey="Income" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" />
+                    <Area type="monotone" dataKey="Conversion" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorConversion)" />
               </AreaChart>
             </ResponsiveContainer>
             )}
@@ -541,6 +572,8 @@ export default function DashboardPage() {
                                   ? 'bg-green-100 text-green-800'
                                   : it.expenseType === 'Credit Card Payment'
                                   ? 'bg-blue-100 text-blue-800'
+                                  : it.expenseType === 'Conversion'
+                                  ? 'bg-purple-100 text-purple-800'
                                   : 'bg-red-100 text-red-800'
                               }`}>
                                 {it.expenseType ?? 'Unknown'}
@@ -553,6 +586,8 @@ export default function DashboardPage() {
                               <div className={`font-bold ${
                                 it.expenseType === 'Income' 
                                   ? 'text-green-600' 
+                                  : it.expenseType === 'Conversion'
+                                  ? 'text-purple-600'
                                   : 'text-gray-900'
                               }`}>
                                 ${Number(it.expenseAmount ?? 0).toLocaleString()}
