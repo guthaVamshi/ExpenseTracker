@@ -8,6 +8,7 @@ type AuthState = {
   logout: () => void
 }
 
+// Load auth from storage on startup
 loadAuthFromStorage()
 
 export const useAuth = create<AuthState>((set) => ({
@@ -15,14 +16,10 @@ export const useAuth = create<AuthState>((set) => ({
   username: localStorage.getItem('auth.user') || null,
   login: async (username: string, password: string) => {
     setBasicAuth(username, password)
-    localStorage.setItem('auth.user', username)
     set({ isAuthenticated: true, username })
   },
   logout: () => {
     clearAuth()
-    localStorage.removeItem('auth.user')
     set({ isAuthenticated: false, username: null })
   },
 }))
-
-

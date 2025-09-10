@@ -11,7 +11,7 @@ export default function DashboardPage() {
   const [form, setForm] = useState<Expense>({ expense: '', expenseType: 'Expense', expenseAmount: '', paymentMethod: 'Cash', date: '' })
   const [month, setMonth] = useState<string>('')
   const [query, setQuery] = useState('')
-  const [filterMode, setFilterMode] = useState<'all' | 'monthly'>('all')
+  const [filterMode] = useState<'all' | 'monthly'>('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), [])
@@ -137,89 +137,163 @@ export default function DashboardPage() {
 
   const net = totals.income - totals.expense
   const creditCardBalance = totals.expense - totals.creditCardPayments
-  const bgClass = net >= 0 ? 'bg-green-50' : 'bg-red-50'
+
+  // Dynamic background based on profit/loss
+  const backgroundClass = net >= 0 
+    ? 'min-h-screen profit-gradient relative overflow-hidden' 
+    : 'min-h-screen loss-gradient relative overflow-hidden'
 
   return (
-    <div className={`min-h-screen transition-colors ${bgClass}`}>
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4 bg-white border-b">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <h1 className="text-xl sm:text-2xl font-semibold">Expense Tracker</h1>
-          <div className={`px-4 py-2 rounded-full text-sm font-bold ${
+    <div className={backgroundClass}>
+      {/* Floating background elements for depth */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {net >= 0 ? (
+          // Profit floating elements - subtle greens
+          <>
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-300/10 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-200/15 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+            <div className="absolute top-1/2 left-1/2 w-60 h-60 bg-green-400/8 rounded-full blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
+            <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-lime-300/12 rounded-full blur-3xl animate-float" style={{animationDelay: '6s'}}></div>
+          </>
+        ) : (
+          // Loss floating elements - subtle reds
+          <>
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-300/10 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-rose-200/15 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+            <div className="absolute top-1/2 left-1/2 w-60 h-60 bg-red-400/8 rounded-full blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
+            <div className="absolute top-1/4 right-1/4 w-72 h-72 bg-pink-300/12 rounded-full blur-3xl animate-float" style={{animationDelay: '6s'}}></div>
+          </>
+        )}
+      </div>
+      
+      <header className="relative z-10 glass-white border-b border-white/20 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                $ Paisa 
+              </h1>
+              <div className={`px-6 py-3 rounded-2xl text-sm font-semibold shadow-apple backdrop-blur-sm border transition-all duration-300 hover:scale-105 ${
             net >= 0 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}>
-            {net >= 0 ? '💰 PROFIT' : '💸 LOSS'} - ${Math.abs(net).toLocaleString()}
+                  ? 'bg-green-50/80 text-green-800 border-green-200/50' 
+                  : 'bg-red-50/80 text-red-800 border-red-200/50'
+              }`}>
+                <span className="text-xs opacity-70 block">Net Balance</span>
+                <span className="text-lg font-bold">
+                  {net >= 0 ? '+' : '-'}${Math.abs(net).toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <button 
+              onClick={logout} 
+              className="self-start sm:self-auto px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50/50 rounded-xl transition-all duration-200"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
-        <button onClick={logout} className="self-start sm:self-auto text-sm text-red-600 hover:underline">Logout</button>
       </header>
 
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 grid gap-4 sm:gap-6 md:grid-cols-5">
-        <div className="md:col-span-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+      <main className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+        {/* Search and Controls Section */}
+        <div className="glass-card rounded-3xl p-6 shadow-apple-lg animate-fade-in">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
             <input
-              placeholder="Search by name or type..."
-              className="w-full sm:w-72 rounded-lg border px-3 py-2"
+                  placeholder="Search expenses and income..."
+                  className="glass-input w-full rounded-2xl pl-10 pr-4 py-3 text-sm font-medium placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-           
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-gray-600">Rows</span>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span className="font-medium">Show:</span>
             <select
-              className="rounded-lg border px-2 py-1"
+                  className="glass-input rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
             >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
+                  <option value={5}>5 rows</option>
+                  <option value={10}>10 rows</option>
+                  <option value={20}>20 rows</option>
             </select>
+              </div>
+              
             <input
               type="month"
-              className="rounded-lg border px-3 py-1"
+                className="glass-input rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
             />
-            <div className="sm:ml-2 flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+              
+              <div className="flex items-center gap-2 bg-white/20 rounded-xl p-1">
               <button
-                className="rounded-lg border px-3 py-1 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:bg-white/30 transition-all duration-200"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Prev
+                  ←
               </button>
-              <span className="text-sm text-gray-700">Page {page} / {totalPages}</span>
+                <span className="px-3 py-2 text-sm font-semibold text-gray-700 min-w-[80px] text-center">
+                  {page} of {totalPages}
+                </span>
               <button
-                className="rounded-lg border px-3 py-1 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:bg-white/30 transition-all duration-200"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
               >
-                Next
+                  →
               </button>
+              </div>
             </div>
           </div>
         </div>
-        <section className="md:col-span-2 bg-white rounded-xl p-4 border">
-          <h2 className="font-medium mb-3">Add Expense/Income</h2>
-          <form className="space-y-3" onSubmit={onSubmit}>
-            <div>
-              <label className="block text-sm mb-1">Name</label>
-              <input className="w-full rounded-lg border px-3 py-2" value={form.expense} onChange={(e) => setForm({ ...form, expense: e.target.value })} required />
+
+        <div className="grid gap-8 lg:grid-cols-5">
+          <section className="lg:col-span-5 glass-card rounded-3xl p-6 shadow-apple-lg animate-slide-up">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary/80 rounded-2xl flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800">Add Transaction</h2>
             </div>
-            <div>
-              <label className="block text-sm mb-1">Type</label>
-              <select className="w-full rounded-lg border px-3 py-2" value={form.expenseType} onChange={(e) => setForm({ ...form, expenseType: e.target.value })}>
+            
+            <form className="space-y-5" onSubmit={onSubmit}>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Description</label>
+                <input 
+                  className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-medium placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20" 
+                  placeholder="Enter transaction description..."
+                  value={form.expense} 
+                  onChange={(e) => setForm({ ...form, expense: e.target.value })} 
+                  required 
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Type</label>
+                  <select className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20" value={form.expenseType} onChange={(e) => setForm({ ...form, expenseType: e.target.value })}>
                 <option>Expense</option>
                 <option>Income</option>
                 <option>Credit Card Payment</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm mb-1">Payment Method</label>
-              <select className="w-full rounded-lg border px-3 py-2" value={form.paymentMethod ?? 'Cash'} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Method</label>
+                  <select className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20" value={form.paymentMethod ?? 'Cash'} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}>
                 <option>Cash</option>
                 <option>Credit Card</option>
                 <option>Debit Card</option>
@@ -227,110 +301,292 @@ export default function DashboardPage() {
                 <option>Other</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm mb-1">Amount</label>
-              <input type="number" step="0.01" className="w-full rounded-lg border px-3 py-2" value={form.expenseAmount} onChange={(e) => setForm({ ...form, expenseAmount: e.target.value })} required />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Amount</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="text-gray-500 text-sm font-medium">$</span>
+                  </div>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    className="glass-input w-full rounded-2xl pl-8 pr-4 py-3 text-sm font-medium placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20" 
+                    placeholder="0.00"
+                    value={form.expenseAmount} 
+                    onChange={(e) => setForm({ ...form, expenseAmount: e.target.value })} 
+                    required 
+                  />
+                </div>
             </div>
-            <div>
-              <label className="block text-sm mb-1">Date</label>
-              <input type="date" className="w-full rounded-lg border px-3 py-2" value={form.date ?? ''} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Date</label>
+                  <input 
+                    type="date" 
+                    className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20" 
+                    value={form.date ?? ''} 
+                    onChange={(e) => setForm({ ...form, date: e.target.value })} 
+                  />
             </div>
-            <div>
-              <label className="block text-sm mb-1">Quick Month (optional)</label>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">Quick Month</label>
               <input
                 type="month"
-                className="w-full rounded-lg border px-3 py-2"
+                    className="glass-input w-full rounded-2xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
                 value={(form.date ?? '').slice(0, 7)}
                 onChange={(e) => setForm({ ...form, date: `${e.target.value}-01` })}
               />
             </div>
-            <button type="submit" className="bg-primary text-white rounded-lg px-4 py-2">{form.id ? 'Update' : 'Add'}</button>
+              </div>
+              
+              <button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-primary to-primary/90 text-white font-semibold py-4 px-6 rounded-2xl shadow-apple hover:shadow-apple-lg transform hover:scale-[1.02] transition-all duration-200"
+              >
+                {form.id ? 'Update Transaction' : 'Add Transaction'}
+              </button>
           </form>
         </section>
 
-        <section className="md:col-span-3 bg-white rounded-xl p-4 border">
-          <h2 className="font-medium mb-3">Overview</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 text-sm">
-            <div className="rounded-lg border p-3">
-              <div className="text-gray-500">Income</div>
-              <div className="text-lg font-semibold text-green-600">{totals.income.toLocaleString()}</div>
+          <section className="lg:col-span-3 space-y-6 animate-slide-up" style={{animationDelay: '0.2s'}}>
+            {/* Overview Header */}
+            <div className="glass-card rounded-3xl p-6 shadow-apple-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Financial Overview</h2>
+              </div>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="glass-dark rounded-2xl p-4 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 font-medium">Income</div>
+                      <div className="text-lg font-bold text-green-600">${totals.income.toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="glass-dark rounded-2xl p-4 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 font-medium">Expenses</div>
+                      <div className="text-lg font-bold text-red-600">${totals.expense.toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="glass-dark rounded-2xl p-4 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 font-medium">CC Payments</div>
+                      <div className="text-lg font-bold text-blue-600">${totals.creditCardPayments.toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="glass-dark rounded-2xl p-4 hover:scale-105 transition-transform duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${creditCardBalance > 0 ? 'bg-red-100' : 'bg-green-100'}`}>
+                      <svg className={`w-4 h-4 ${creditCardBalance > 0 ? 'text-red-600' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 font-medium">CC Balance</div>
+                      <div className={`text-lg font-bold ${creditCardBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        ${Math.abs(creditCardBalance).toLocaleString()}
+                      </div>
             </div>
-            <div className="rounded-lg border p-3">
-              <div className="text-gray-500">Expenses</div>
-              <div className="text-lg font-semibold text-red-600">{totals.expense.toLocaleString()}</div>
             </div>
-            <div className="rounded-lg border p-3">
-              <div className="text-gray-500">CC Payments</div>
-              <div className="text-lg font-semibold text-blue-600">{totals.creditCardPayments.toLocaleString()}</div>
             </div>
-            <div className="rounded-lg border p-3">
-              <div className="text-gray-500">CC Balance</div>
-              <div className={`text-lg font-semibold ${creditCardBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {creditCardBalance > 0 ? `+${creditCardBalance.toLocaleString()}` : creditCardBalance.toLocaleString()}
               </div>
             </div>
+
+            {/* Chart Section */}
+            <div className="glass-card rounded-3xl p-6 shadow-apple-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-800">Transaction Trends</h3>
           </div>
-          <div className="h-56 sm:h-64 md:h-72">
+              
+              <div className="h-64 sm:h-72 md:h-80 rounded-2xl overflow-hidden bg-gradient-to-br from-white/50 to-white/30 backdrop-blur-sm border border-white/20 p-4">
             {filtered.length === 0 ? (
-              <div className="h-full grid place-items-center text-gray-500 text-sm">No data to display</div>
+                  <div className="h-full flex flex-col items-center justify-center text-gray-500">
+                    <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <p className="text-sm font-medium">No transaction data to display</p>
+                    <p className="text-xs opacity-70">Add some transactions to see your trends</p>
+                  </div>
             ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
                 <defs>
                   <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.7}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
                   </linearGradient>
                   <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.7}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.2)" />
                 <XAxis dataKey="name" hide />
-                <YAxis />
-                <Tooltip />
+                    <YAxis stroke="rgba(0,0,0,0.5)" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)'
+                      }}
+                    />
                 <Legend />
-                <Area type="monotone" dataKey="Expense" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" />
-                <Area type="monotone" dataKey="Income" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" />
+                    <Area type="monotone" dataKey="Expense" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorExpense)" />
+                    <Area type="monotone" dataKey="Income" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" />
               </AreaChart>
             </ResponsiveContainer>
             )}
           </div>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 whitespace-nowrap">
-                  <th className="py-2 pr-4">Name</th>
-                  <th className="py-2 pr-4">Type</th>
-                  <th className="py-2 pr-4">Method</th>
-                  <th className="py-2 pr-4">Amount</th>
-                  <th className="py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
+            </div>
+           
+        </section>
+        <section className="lg:col-span-8 space-y-6 animate-slide-up" style={{animationDelay: '0.2s'}}>
+           
+            {/* Transactions Table */}
+            <div className="glass-card rounded-3xl p-6 shadow-apple-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-800">Recent Transactions</h3>
+                <div className="ml-auto px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold text-gray-600">
+                  {filtered.length} items
+                </div>
+              </div>
+              
+              <div className="overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/20">
                 {loading ? (
-                  <tr><td className="py-3" colSpan={5}>Loading…</td></tr>
+                  <div className="p-8 text-center">
+                    <div className="inline-flex items-center gap-2 text-gray-500">
+                      <svg className="animate-spin w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Loading transactions...
+                    </div>
+                  </div>
                 ) : filtered.length === 0 ? (
-                  <tr><td className="py-3" colSpan={5}>No entries</td></tr>
+                  <div className="p-8 text-center text-gray-500">
+                    <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p className="text-sm font-medium">No transactions found</p>
+                    <p className="text-xs opacity-70">Add your first transaction to get started</p>
+                  </div>
                 ) : (
-                  paginated.map((it) => (
-                    <tr key={it.id} className="border-t">
-                      <td className="py-2 pr-4">{(it.expense && it.expense.trim().length > 0) ? it.expense : 'Untitled'}</td>
-                      <td className="py-2 pr-4">{it.expenseType ?? 'Unknown'}</td>
-                      <td className="py-2 pr-4">{it.paymentMethod ?? 'Cash'}</td>
-                      <td className="py-2 pr-4">{Number(it.expenseAmount ?? 0).toLocaleString()}</td>
-                      <td className="py-2 text-right space-x-2">
-                        <button className="text-primary" onClick={() => setForm(it)}>Edit</button>
-                        <button className="text-red-600" onClick={() => onDelete(it.id)}>Delete</button>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-white/30 backdrop-blur-sm">
+                        <tr className="text-left">
+                          <th className="py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Description</th>
+                          <th className="py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                          <th className="py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Method</th>
+                          <th className="py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                          <th className="py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                          <th className="py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/20">
+                        {paginated.map((it) => (
+                          <tr key={it.id} className="hover:bg-white/20 transition-colors duration-200 group">
+                            <td className="py-4 px-6">
+                              <div className="font-medium text-gray-900">
+                                {(it.expense && it.expense.trim().length > 0) ? it.expense : 'Untitled'}
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                                it.expenseType === 'Income' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : it.expenseType === 'Credit Card Payment'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {it.expenseType ?? 'Unknown'}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                              {it.paymentMethod ?? 'Cash'}
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className={`font-bold ${
+                                it.expenseType === 'Income' 
+                                  ? 'text-green-600' 
+                                  : 'text-gray-900'
+                              }`}>
+                                ${Number(it.expenseAmount ?? 0).toLocaleString()}
+                              </div>
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                              {it.date ? new Date(it.date).toLocaleDateString() : ''}
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <button 
+                                  className="px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors duration-200"
+                                  onClick={() => setForm(it)}
+                                >
+                                  Edit
+                                </button>
+                                <button 
+                                  className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                                  onClick={() => onDelete(it.id)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                        ))}
               </tbody>
             </table>
+                  </div>
+                )}
+              </div>
           </div>
         </section>
+        </div>
       </main>
     </div>
   )

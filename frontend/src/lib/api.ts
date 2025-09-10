@@ -8,11 +8,13 @@ export function setBasicAuth(username: string, password: string) {
   const token = btoa(`${username}:${password}`)
   api.defaults.headers.common['Authorization'] = `Basic ${token}`
   localStorage.setItem('auth.basic', token)
+  localStorage.setItem('auth.user', username)
 }
 
 export function clearAuth() {
   delete api.defaults.headers.common['Authorization']
   localStorage.removeItem('auth.basic')
+  localStorage.removeItem('auth.user')
 }
 
 export function loadAuthFromStorage() {
@@ -22,20 +24,29 @@ export function loadAuthFromStorage() {
   }
 }
 
+// Load auth on startup
+loadAuthFromStorage()
+
 // Always attach Authorization header from storage if present
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth.basic')
   if (token) {
     config.headers = config.headers ?? {}
-    ;(config.headers as any)['Authorization'] = `Basic ${token}`
+    config.headers['Authorization'] = `Basic ${token}`
   }
   return config
 })
 
-// Surface 401 to caller; do not auto-redirect to avoid loops
+// Handle auth errors
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error)
+  (error) => {
+    if (error.response?.status === 401) {
+      clearAuth()
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
 )
 
 export type Expense = {
@@ -69,5 +80,3 @@ export const ExpenseAPI = {
     return data as string
   },
 }
-
-

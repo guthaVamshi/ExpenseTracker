@@ -36,6 +36,12 @@ public class HomeController {
         return "welcome";
     }
 
+    @GetMapping("/test-auth")
+    public String testAuth() {
+        logger.info("Test auth endpoint called - authentication successful");
+        return "Authentication successful";
+    }
+
     @GetMapping("/all")
     public List<Expense> getAllExpenses(){
         logger.info("Fetching all expenses");
