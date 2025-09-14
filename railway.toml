@@ -9,7 +9,7 @@ JAVA_TOOL_OPTIONS = "-Xmx1g -XX:+UseParallelGC"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "always"
-startCommand = "java -Dspring.profiles.active=prod -Dserver.port=$PORT -Xmx512m -jar target/ExpenseTracker-0.0.1-SNAPSHOT.jar"
+startCommand = "java -Dspring.profiles.active=prod -Dserver.port=$PORT -Xmx512m -jar target/expense-tracker.jar"
 
 [env]
 SPRING_PROFILES_ACTIVE = "prod"
