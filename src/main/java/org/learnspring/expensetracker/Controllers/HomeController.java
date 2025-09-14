@@ -54,6 +54,15 @@ public class HomeController {
         return "welcome";
     }
 
+    @GetMapping("/health")
+    public Map<String, String> health(){
+        Map<String, String> health = new HashMap<>();
+        health.put("status", "UP");
+        health.put("service", "ExpenseTracker");
+        health.put("timestamp", java.time.Instant.now().toString());
+        return health;
+    }
+
     @GetMapping("/test-auth")
     public String testAuth() {
         logger.info("Test auth endpoint called - authentication successful");
