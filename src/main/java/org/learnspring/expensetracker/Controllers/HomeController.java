@@ -93,9 +93,14 @@ public class HomeController {
         Users currentUser = getCurrentUser();
         exp.setUser(currentUser);
         logger.info("Adding new expense: {} for user: {}", exp, currentUser.getUsername());
-        service.addExpense(exp);
-        logger.info("Successfully added expense with ID: {} for user: {}", exp.getId(), currentUser.getUsername());
-        return exp;
+        try {
+            Expense savedExpense = service.addExpense(exp);
+            logger.info("Successfully added expense with ID: {} for user: {}", savedExpense.getId(), currentUser.getUsername());
+            return savedExpense;
+        } catch (Exception e) {
+            logger.error("Failed to add expense for user: {} - Error: {}", currentUser.getUsername(), e.getMessage(), e);
+            throw new RuntimeException("Failed to save expense. Please try again.", e);
+        }
     }
     @GetMapping("/CsrfToken")
    public CsrfToken getCsrfToken(HttpServletRequest request){
@@ -106,38 +111,48 @@ public class HomeController {
     public Expense updateExpenses(@Valid @RequestBody Expense exp){
         Users currentUser = getCurrentUser();
         
-        // Check if the expense belongs to the current user
-        if (!isExpenseOwnedByUser(exp.getId(), currentUser)) {
-            logger.warn("User {} attempted to update expense {} owned by another user", 
-                       currentUser.getUsername(), exp.getId());
-            throw new RuntimeException("You can only update your own expenses");
+        try {
+            // Check if the expense belongs to the current user
+            if (!isExpenseOwnedByUser(exp.getId(), currentUser)) {
+                logger.warn("User {} attempted to update expense {} owned by another user", 
+                           currentUser.getUsername(), exp.getId());
+                throw new RuntimeException("You can only update your own expenses");
+            }
+            
+            // Ensure the user is set correctly (prevent user switching)
+            exp.setUser(currentUser);
+            logger.info("Updating expense with ID: {} for user: {}", exp.getId(), currentUser.getUsername());
+            service.updateExpenses(exp);
+            logger.info("Successfully updated expense with ID: {} for user: {}", exp.getId(), currentUser.getUsername());
+            return exp;
+        } catch (Exception e) {
+            logger.error("Failed to update expense {} for user: {} - Error: {}", exp.getId(), currentUser.getUsername(), e.getMessage(), e);
+            throw new RuntimeException("Failed to update expense. Please try again.", e);
         }
-        
-        // Ensure the user is set correctly (prevent user switching)
-        exp.setUser(currentUser);
-        logger.info("Updating expense with ID: {} for user: {}", exp.getId(), currentUser.getUsername());
-        service.updateExpenses(exp);
-        logger.info("Successfully updated expense with ID: {} for user: {}", exp.getId(), currentUser.getUsername());
-        return exp;
     }
 
     @DeleteMapping("/delete/{id}")
     public String deleteExpenses(@PathVariable Integer id){
         Users currentUser = getCurrentUser();
         
-        // Check if the expense belongs to the current user
-        if (!isExpenseOwnedByUser(id, currentUser)) {
-            logger.warn("User {} attempted to delete expense {} owned by another user", 
-                       currentUser.getUsername(), id);
-            throw new RuntimeException("You can only delete your own expenses");
+        try {
+            // Check if the expense belongs to the current user
+            if (!isExpenseOwnedByUser(id, currentUser)) {
+                logger.warn("User {} attempted to delete expense {} owned by another user", 
+                           currentUser.getUsername(), id);
+                throw new RuntimeException("You can only delete your own expenses");
+            }
+            
+            logger.info("Deleting expense with ID: {} for user: {}", id, currentUser.getUsername());
+            Expense exp = new Expense();
+            exp.setId(id);
+            service.deleteExpenses(exp);
+            logger.info("Successfully deleted expense with ID: {} for user: {}", id, currentUser.getUsername());
+            return "Expense with ID " + id + " deleted successfully";
+        } catch (Exception e) {
+            logger.error("Failed to delete expense {} for user: {} - Error: {}", id, currentUser.getUsername(), e.getMessage(), e);
+            throw new RuntimeException("Failed to delete expense. Please try again.", e);
         }
-        
-        logger.info("Deleting expense with ID: {} for user: {}", id, currentUser.getUsername());
-        Expense exp = new Expense();
-        exp.setId(id);
-        service.deleteExpenses(exp);
-        logger.info("Successfully deleted expense with ID: {} for user: {}", id, currentUser.getUsername());
-        return "Expense with ID " + id + " deleted successfully";
     }
 
     /**
