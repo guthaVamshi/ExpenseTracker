@@ -2,6 +2,8 @@
 
 A robust REST API for managing personal expenses built with Spring Boot, JPA, and PostgreSQL. This project demonstrates modern backend development practices including validation, logging, testing, and comprehensive API documentation.
 
+> **Note**: This is the backend-only repository. The frontend React application is maintained in a separate repository for better separation of concerns and independent deployment.
+
 ## 🚀 Features
 
 - **CRUD Operations**: Create, Read, Update, and Delete expense records
@@ -236,6 +238,24 @@ This project demonstrates:
 - **Error Handling**: Global exception handling and consistent error responses
 - **API Documentation**: Custom documentation solution
 - **Database Integration**: JPA/Hibernate with PostgreSQL
+
+## 🌐 Frontend Integration
+
+This backend API is designed to work with the separate Expense Tracker frontend application. The frontend repository includes:
+
+- **React + TypeScript** application
+- **Modern UI** with Tailwind CSS
+- **Authentication** integration
+- **Real-time dashboard** with charts and analytics
+
+### CORS Configuration
+
+The backend is configured to accept requests from:
+- `http://localhost:5173` (frontend development)
+- `http://localhost:3000` (alternative frontend port)
+- `https://moneyfind.netlify.app` (production frontend)
+
+To add additional frontend domains, update the CORS configuration in `src/main/java/org/learnspring/expensetracker/config/CorsConfig.java`.
 
 ## 🤝 Contributing
 
