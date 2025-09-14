@@ -1,15 +1,5 @@
 [build]
 builder = "nixpacks"
 
-[build.env]
-MAVEN_OPTS = "-Xmx1g -XX:+UseParallelGC"
-JAVA_TOOL_OPTIONS = "-Xmx1g -XX:+UseParallelGC"
-
 [deploy]
-healthcheckPath = "/"
-healthcheckTimeout = 120
-restartPolicyType = "always"
-startCommand = "java -Dserver.port=$PORT -Dspring.profiles.active=prod -Xmx512m -XX:+UseSerialGC -jar target/expense-tracker.jar"
-
-[env]
-SPRING_PROFILES_ACTIVE = "prod"
+startCommand = "java -jar target/expense-tracker.jar"
