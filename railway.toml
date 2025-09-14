@@ -1,10 +1,15 @@
 [build]
 builder = "nixpacks"
 
+[build.env]
+MAVEN_OPTS = "-Xmx1g -XX:+UseParallelGC"
+JAVA_TOOL_OPTIONS = "-Xmx1g -XX:+UseParallelGC"
+
 [deploy]
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "always"
+startCommand = "java -Dspring.profiles.active=prod -Dserver.port=$PORT -Xmx512m -jar target/*.jar"
 
 [env]
 SPRING_PROFILES_ACTIVE = "prod"
