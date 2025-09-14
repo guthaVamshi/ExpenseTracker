@@ -60,11 +60,34 @@ public class HomeController {
     }
 
     @GetMapping("/health")
-    public Map<String, String> health(){
-        Map<String, String> health = new HashMap<>();
+    public Map<String, Object> health(){
+        logger.debug("Health check endpoint accessed");
+        Map<String, Object> health = new HashMap<>();
         health.put("status", "UP");
         health.put("service", "ExpenseTracker");
         health.put("timestamp", java.time.Instant.now().toString());
+        health.put("uptime", java.lang.management.ManagementFactory.getRuntimeMXBean().getUptime());
+        
+        // Memory information
+        Runtime runtime = Runtime.getRuntime();
+        Map<String, Object> memory = new HashMap<>();
+        memory.put("total", runtime.totalMemory());
+        memory.put("free", runtime.freeMemory());
+        memory.put("used", runtime.totalMemory() - runtime.freeMemory());
+        memory.put("max", runtime.maxMemory());
+        health.put("memory", memory);
+        
+        // Database connectivity check
+        try {
+            // Simple database connectivity test
+            service.getExpenses();
+            health.put("database", "CONNECTED");
+        } catch (Exception e) {
+            health.put("database", "ERROR");
+            health.put("database_error", e.getMessage());
+            logger.warn("Database health check failed: {}", e.getMessage());
+        }
+        
         return health;
     }
 
@@ -97,7 +120,7 @@ public class HomeController {
             Expense savedExpense = service.addExpense(exp);
             logger.info("Successfully added expense with ID: {} for user: {}", savedExpense.getId(), currentUser.getUsername());
             return savedExpense;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             logger.error("Failed to add expense for user: {} - Error: {}", currentUser.getUsername(), e.getMessage(), e);
             throw new RuntimeException("Failed to save expense. Please try again.", e);
         }
@@ -149,7 +172,7 @@ public class HomeController {
             service.deleteExpenses(exp);
             logger.info("Successfully deleted expense with ID: {} for user: {}", id, currentUser.getUsername());
             return "Expense with ID " + id + " deleted successfully";
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             logger.error("Failed to delete expense {} for user: {} - Error: {}", id, currentUser.getUsername(), e.getMessage(), e);
             throw new RuntimeException("Failed to delete expense. Please try again.", e);
         }

@@ -3,9 +3,15 @@ services:
     name: expense-tracker-backend
     env: java
     buildCommand: ./mvnw clean package -DskipTests -B
-    startCommand: java -Dspring.profiles.active=prod -Dserver.port=$PORT -Xmx512m -jar target/expense-tracker.jar
+    startCommand: ./start.sh
     plan: free
-    healthCheckPath: /
+    healthCheckPath: /health
+    autoDeploy: true
+    buildFilter:
+      paths:
+      - src/**
+      - pom.xml
+      - start.sh
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -14,4 +20,6 @@ services:
           name: expense-tracker-db
           property: connectionString
       - key: JAVA_OPTS
-        value: "-Xmx512m -XX:+UseSerialGC"
+        value: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+UseStringDeduplication -Djava.security.egd=file:/dev/./urandom"
+      - key: PORT
+        value: "8080"
