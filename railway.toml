@@ -6,10 +6,10 @@ MAVEN_OPTS = "-Xmx1g -XX:+UseParallelGC"
 JAVA_TOOL_OPTIONS = "-Xmx1g -XX:+UseParallelGC"
 
 [deploy]
-healthcheckPath = "/health"
-healthcheckTimeout = 300
+healthcheckPath = "/"
+healthcheckTimeout = 120
 restartPolicyType = "always"
-startCommand = "java -Dserver.port=$PORT -Xmx512m -XX:+UseSerialGC -jar target/expense-tracker.jar"
+startCommand = "java -Dserver.port=$PORT -Dspring.profiles.active=prod -Xmx512m -XX:+UseSerialGC -jar target/expense-tracker.jar"
 
 [env]
 SPRING_PROFILES_ACTIVE = "prod"

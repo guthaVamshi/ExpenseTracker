@@ -50,8 +50,13 @@ public class HomeController {
     }
 
     @GetMapping("/")
-    public String indexPage(){
-        return "welcome";
+    public Map<String, String> indexPage(){
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "UP");
+        response.put("service", "ExpenseTracker API");
+        response.put("message", "Welcome to Expense Tracker");
+        response.put("timestamp", java.time.Instant.now().toString());
+        return response;
     }
 
     @GetMapping("/health")
