@@ -58,6 +58,13 @@ export type Expense = {
   date?: string
 }
 
+export type User = {
+  id?: number
+  username: string
+  password?: string
+  role?: string
+}
+
 export const ExpenseAPI = {
   list: async () => {
     const { data } = await api.get<Expense[]>('/all')
@@ -78,5 +85,12 @@ export const ExpenseAPI = {
   remove: async (id: number) => {
     const { data } = await api.delete(`/delete/${id}`)
     return data as string
+  },
+}
+
+export const UserAPI = {
+  register: async (payload: User) => {
+    const { data } = await api.post<User>('/register', payload)
+    return data
   },
 }

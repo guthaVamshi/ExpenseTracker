@@ -5,6 +5,7 @@ import java.time.YearMonth;
 import java.util.List;
 
 import org.learnspring.expensetracker.Model.Expense;
+import org.learnspring.expensetracker.Model.Users;
 import org.learnspring.expensetracker.repo.expenseRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,13 @@ public class expenseService {
         logger.debug("Retrieving all expenses from database");
         List<Expense> expenses = expenseRepo.findAll();
         logger.debug("Found {} expenses", expenses.size());
+        return expenses;
+    }
+
+    public List<Expense> getExpensesByUser(Users user){
+        logger.debug("Retrieving expenses for user: {}", user.getUsername());
+        List<Expense> expenses = expenseRepo.findByUser(user);
+        logger.debug("Found {} expenses for user: {}", expenses.size(), user.getUsername());
         return expenses;
     }
 
@@ -51,5 +59,18 @@ public class expenseService {
         LocalDate end = ym.atEndOfMonth();
         logger.debug("Fetching expenses between {} and {}", start, end);
         return expenseRepo.findByDateBetween(start, end);
+    }
+
+    public List<Expense> getByMonthForUser(String yearMonth, Users user) {
+        YearMonth ym = YearMonth.parse(yearMonth); // expects YYYY-MM
+        LocalDate start = ym.atDay(1);
+        LocalDate end = ym.atEndOfMonth();
+        logger.debug("Fetching expenses for user {} between {} and {}", user.getUsername(), start, end);
+        return expenseRepo.findByUserAndDateBetween(user, start, end);
+    }
+
+    public Expense getExpenseById(Integer id) {
+        logger.debug("Retrieving expense with ID: {}", id);
+        return expenseRepo.findById(id).orElse(null);
     }
 }

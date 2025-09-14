@@ -5,10 +5,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.learnspring.expensetracker.Model.Expense;
+import org.learnspring.expensetracker.Model.Users;
 import org.learnspring.expensetracker.Service.expenseService;
+import org.learnspring.expensetracker.repo.UserRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,6 +35,20 @@ public class HomeController {
     @Autowired
     private expenseService service;
 
+    @Autowired
+    private UserRepo userRepo;
+
+    private Users getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        return userRepo.findByUsername(username);
+    }
+
+    private boolean isExpenseOwnedByUser(Integer expenseId, Users user) {
+        Expense expense = service.getExpenseById(expenseId);
+        return expense != null && expense.getUser() != null && expense.getUser().getId().equals(user.getId());
+    }
+
     @GetMapping("/")
     public String indexPage(){
         return "welcome";
@@ -44,21 +62,25 @@ public class HomeController {
 
     @GetMapping("/all")
     public List<Expense> getAllExpenses(){
-        logger.info("Fetching all expenses");
-        return service.getExpenses();
+        Users currentUser = getCurrentUser();
+        logger.info("Fetching all expenses for user: {}", currentUser.getUsername());
+        return service.getExpensesByUser(currentUser);
     }
 
     @GetMapping("/by-month/{yearMonth}")
     public List<Expense> getByMonth(@PathVariable String yearMonth){
-        logger.info("Fetching expenses for month {}", yearMonth);
-        return service.getByMonth(yearMonth);
+        Users currentUser = getCurrentUser();
+        logger.info("Fetching expenses for month {} for user: {}", yearMonth, currentUser.getUsername());
+        return service.getByMonthForUser(yearMonth, currentUser);
     }
 
     @PostMapping("/add")
     public Expense addExpenses(@Valid @RequestBody Expense exp){
-        logger.info("Adding new expense: {}", exp);
+        Users currentUser = getCurrentUser();
+        exp.setUser(currentUser);
+        logger.info("Adding new expense: {} for user: {}", exp, currentUser.getUsername());
         service.addExpense(exp);
-        logger.info("Successfully added expense with ID: {}", exp.getId());
+        logger.info("Successfully added expense with ID: {} for user: {}", exp.getId(), currentUser.getUsername());
         return exp;
     }
     @GetMapping("/CsrfToken")
@@ -68,19 +90,39 @@ public class HomeController {
    }
     @PutMapping("/updateExpense")
     public Expense updateExpenses(@Valid @RequestBody Expense exp){
-        logger.info("Updating expense with ID: {}", exp.getId());
+        Users currentUser = getCurrentUser();
+        
+        // Check if the expense belongs to the current user
+        if (!isExpenseOwnedByUser(exp.getId(), currentUser)) {
+            logger.warn("User {} attempted to update expense {} owned by another user", 
+                       currentUser.getUsername(), exp.getId());
+            throw new RuntimeException("You can only update your own expenses");
+        }
+        
+        // Ensure the user is set correctly (prevent user switching)
+        exp.setUser(currentUser);
+        logger.info("Updating expense with ID: {} for user: {}", exp.getId(), currentUser.getUsername());
         service.updateExpenses(exp);
-        logger.info("Successfully updated expense with ID: {}", exp.getId());
+        logger.info("Successfully updated expense with ID: {} for user: {}", exp.getId(), currentUser.getUsername());
         return exp;
     }
 
     @DeleteMapping("/delete/{id}")
     public String deleteExpenses(@PathVariable Integer id){
-        logger.info("Deleting expense with ID: {}", id);
+        Users currentUser = getCurrentUser();
+        
+        // Check if the expense belongs to the current user
+        if (!isExpenseOwnedByUser(id, currentUser)) {
+            logger.warn("User {} attempted to delete expense {} owned by another user", 
+                       currentUser.getUsername(), id);
+            throw new RuntimeException("You can only delete your own expenses");
+        }
+        
+        logger.info("Deleting expense with ID: {} for user: {}", id, currentUser.getUsername());
         Expense exp = new Expense();
         exp.setId(id);
         service.deleteExpenses(exp);
-        logger.info("Successfully deleted expense with ID: {}", id);
+        logger.info("Successfully deleted expense with ID: {} for user: {}", id, currentUser.getUsername());
         return "Expense with ID " + id + " deleted successfully";
     }
 
